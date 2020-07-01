@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>update Emp</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css"
+          href="css/style.css"/>
+</head>
+
+<body>
+<div id="wrap">
+    <div id="top_content">
+        <div id="header">
+            <div id="rightheader">
+                <p>
+                    2009/11/20
+                    <br/>
+                    <a href="javascript:" @click="logout">安全退出</a>
+                </p>
+            </div>
+            <div id="topheader">
+                <h1 id="title">
+                    <a href="emplist.html">main</a>
+                </h1>
+            </div>
+            <div id="navigation">
+            </div>
+        </div>
+        <div id="content">
+            <p id="whereami">
+            </p>
+            <h1>
+                update Emp info:
+            </h1>
+            <form action="emplist.html" method="post">
+                <table cellpadding="0" cellspacing="0" border="0"
+                       class="form_table">
+                    <tr>
+                        <td valign="middle" align="right">
+                            id:
+                        </td>
+                        <td valign="middle" align="left">
+                            {{emp.id}}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            name:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.name"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            old photo:
+                        </td>
+                        <td valign="middle" align="left">
+                            <!--等着emp.path有数据了再显示图片，否则会多请求一次-->
+                            <img v-if="emp.path" :src="host+emp.path" height="60px" alt="">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            photo:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="file" ref="photo"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            salary:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.salary"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            age:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.age"/>
+                        </td>
+                    </tr>
+                </table>
+                <p>
+                    <input type="button" @click="editEmp" class="button" value="Confirm"/>
+                </p>
+            </form>
+        </div>
+    </div>
+    <div id="footer">
+        <div id="footer_bg">
+            ABC@126.com
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="js/vue.js"></script>
+<script type="text/javascript" src="js/axios.min.js"></script>
+<script type="text/javascript">
+    // JS函数用于获取url参数
+    function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+            var pair = vars[i].split("=");
+            if (pair[0] === variable) {
+                return pair[1];
+            }
+        }
+        return false;
+    }
+
+    // 请求携带cookie
+    axios.defaults.withCredentials = true;
+    axios.defaults.baseURL = 'http://localhost:8080';
+    var app = new Vue({
+        el: "#wrap",
+        data: {
+            user: {},
+            emp: {},
+            host: "http://localhost:8080/"    // 图片地址
+        },
+        methods: {
+            // 判断是否登录
+            islogin: function () {
+                axios.get("/user/islogin").then(res => {
+                    console.log(res.data);
+                    if (res.data.status) {
+                        app.user = res.data.data;
+                        this.findOne();
+                    } else {
+                        alert("请您登录");
+                        location.href = "login.html";
+                    }
+                })
+            },
+            // 注销
+            logout: function () {
+                axios.get("/user/logout").then(res => {
+                    console.log(res.data);
+                    alert(res.data.msg);
+                    location.href = "login.html";
+                })
+            },
+            findOne: function () {
+                var id = getQueryVariable("id");
+                axios.get("/emp/findOne?id=" + id).then(res => {
+                    console.log(res.data);
+                    if (res.data.status) {
+                        this.emp = res.data.data;
+                    } else {
+                        console.log(res.data.msg);
+                        alert(res.data.msg);
+                    }
+
+                })
+            },
+            editEmp: function () {
+                var file = this.$refs.photo.files[0];
+                var formData = new FormData();
+                formData.append("id", this.emp.id);
+                formData.append("name", this.emp.name);
+                formData.append("path", this.emp.path);
+                formData.append("salary", this.emp.salary);
+                formData.append("age", this.emp.age);
+                formData.append("photo", file);
+                axios({
+                    method: "post",
+                    url: "/emp/update",
+                    data: formData,
+                    headers: {
+                        "content-type": "multipart/form-data"
+                    }
+                }).then(res => {
+                    console.log(res.data);
+                    if (res.data.status) {
+                        if (window.confirm(res.data.msg + ",点击确定跳转列表页面！")) {
+                            location.href = "emplist.html";
+                        }
+                    } else {
+                        alert(res.data.msg);
+                    }
+                });
+            }
+        },
+        created() {
+            this.islogin();
+        }
+    });
+</script>
+</body>
+</html>

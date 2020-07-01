@@ -1,0 +1,148 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+    <title>add Emp</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css"
+          href="css/style.css"/>
+</head>
+
+<body>
+<div id="wrap">
+    <div id="top_content">
+        <div id="header">
+            <div id="rightheader">
+                <p>
+                    2009/11/20
+                    <br/>
+                    <a href="javascript:" @click="logout">安全退出</a>
+                </p>
+            </div>
+            <div id="topheader">
+                <h1 id="title">
+                    <a href="emplist.html">main</a>
+                </h1>
+            </div>
+            <div id="navigation">
+            </div>
+        </div>
+        <div id="content">
+            <p id="whereami">
+            </p>
+            <h1>
+                add Emp info:
+            </h1>
+            <form>
+                <table cellpadding="0" cellspacing="0" border="0"
+                       class="form_table">
+                    <tr>
+                        <td valign="middle" align="right">
+                            name:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.name"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            photo:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="file" name="photo" ref="myphoto"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            salary:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.salary"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td valign="middle" align="right">
+                            age:
+                        </td>
+                        <td valign="middle" align="left">
+                            <input type="text" class="inputgri" v-model="emp.age"/>
+                        </td>
+                    </tr>
+                </table>
+                <p>
+                    <input type="button" v-on:click="save" class="button" value="Confirm"/>
+                </p>
+            </form>
+        </div>
+    </div>
+    <div id="footer">
+        <div id="footer_bg">
+            ABC@126.com
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="js/vue.js"></script>
+<script type="text/javascript" src="js/axios.min.js"></script>
+<script type="text/javascript">
+    // 请求携带cookie
+    axios.defaults.withCredentials = true;
+    axios.defaults.baseURL = 'http://localhost:8080';
+    var app = new Vue({
+        el: "#wrap",
+        data: {
+            user: {},
+            emp: {}
+        },
+        methods: {
+            islogin: function () {
+                axios.get("/user/islogin").then(res => {
+                    if (res.data.status) {
+
+                    } else {
+                        alert("请您登录");
+                        location.href = "login.html";
+                    }
+                })
+            },
+            logout: function () {
+                axios.get("/user/logout").then(res => {
+                    console.log(res.data);
+                    alert(res.data.msg);
+                    location.href = "login.html";
+                })
+            },
+            save: function () {
+                console.log(this.emp);
+                console.log(this.$refs.myphoto.files[0]);
+                var formData = new FormData();
+                formData.append("name", this.emp.name);
+                formData.append("salary", this.emp.salary);
+                formData.append("age", this.emp.age);
+                formData.append("photo", this.$refs.myphoto.files[0]);
+                axios({
+                    method: "post",
+                    url: "/emp/save",
+                    data: formData,
+                    headers: {
+                        "content-type": "multipart/form-data"
+                    }
+                }).then(res => {
+                    console.log(res.data);
+                    if (res.data.status) {
+                        if (window.confirm(res.data.msg + ",点击确定跳转列表页面！")) {
+                            location.href = "emplist.html";
+                        } else {
+                            app.emp = {};
+                        }
+                    } else {
+                        alert(res.data.msg);
+                    }
+                });
+            }
+        },
+        created() {
+            this.islogin();
+        }
+    });
+</script>
+</body>
+</html>

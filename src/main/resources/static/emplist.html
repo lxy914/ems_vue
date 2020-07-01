@@ -1,0 +1,152 @@
+<!DOCTYPE>
+<html>
+<head>
+    <title>emplist</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+</head>
+<body>
+<div id="wrap">
+    <div id="top_content">
+        <div id="header">
+            <div id="rightheader">
+                <p>
+                    2009/11/20
+                    <br/>
+                    <a href="javascript:" @click="logout">安全退出</a>
+                </p>
+            </div>
+            <div id="topheader">
+                <h1 id="title">
+                    <a href="emplist.html">main</a>
+                </h1>
+            </div>
+            <div id="navigation">
+            </div>
+        </div>
+        <div id="content">
+            <p id="whereami">
+            </p>
+            <h1>
+                Welcome {{user.realname}}!
+            </h1>
+            <table class="table">
+                <tr class="table_header">
+                    <td>
+                        ID
+                    </td>
+                    <td>
+                        Name
+                    </td>
+                    <td>
+                        Photo
+                    </td>
+                    <td>
+                        Salary
+                    </td>
+                    <td>
+                        Age
+                    </td>
+                    <td>
+                        Operation
+                    </td>
+                </tr>
+                <tr v-for="(emp,index) in emps" :key="emp.id" :class="index%2===0?'row1':'row2'">
+                    <td>
+                        {{emp.id}}
+                    </td>
+                    <td>
+                        {{emp.name}}
+                    </td>
+                    <td>
+                        <img :src="src+emp.path" style="height: 60px;">
+                    </td>
+                    <td>
+                        {{emp.salary}}
+                    </td>
+                    <td>
+                        {{emp.age}}
+                    </td>
+                    <td>
+                        <a href="javascript:" @click="delEmp(emp.id)">delete emp</a>&nbsp;<a
+                            :href="'updateEmp.html?id='+emp.id">update emp</a>
+                    </td>
+                </tr>
+            </table>
+            <p>
+                <input type="button" class="button" value="Add Employee" onclick="location='addEmp.html'"/>
+            </p>
+        </div>
+    </div>
+    <div id="footer">
+        <div id="footer_bg">
+            ABC@126.com
+        </div>
+    </div>
+</div>
+<script type="text/javascript" src="js/vue.js"></script>
+<script type="text/javascript" src="js/axios.min.js"></script>
+<script type="text/javascript">
+    // 请求携带cookie
+    axios.defaults.withCredentials = true;
+    axios.defaults.baseURL = 'http://localhost:8080';
+    var app = new Vue({
+        el: "#wrap",
+        data: {
+            user: {},
+            emps: [],
+            src:"http://localhost:8080/"    // 图片地址
+        },
+        methods: {
+            islogin: function () {
+                axios.get("/user/islogin").then(res => {
+                    if (res.data.status) {
+                        app.user=res.data.data;
+                        this.findAll();
+                    } else {
+                        alert("请您登录");
+                        location.href = "login.html";
+                    }
+                })
+            },
+            logout: function () {
+                axios.get("/user/logout").then(res => {
+                    console.log(res.data);
+                    alert(res.data.msg);
+                    location.href = "login.html";
+                })
+            },
+            findAll: function () {
+                axios.get("/emp/findAll").then(res => {
+                    console.log(res.data);
+                    if (res.data.status) {
+                        app.emps = res.data.data;
+                    } else {
+                        alert(res.data.msg);
+                        location.href = "login.html";
+                    }
+
+                })
+            },
+            delEmp: function (id) {
+                if (window.confirm("确定要删除吗？")) {
+                    var formData = new FormData();
+                    formData.append("id", id);
+                    axios.post("/emp/delete", formData).then(res => {
+                        if (res.data.status) {
+                            alert(res.data.msg + ",点击确定刷新页面");
+                            app.findAll();
+                        } else {
+                            alert(res.data.msg);
+                        }
+                    })
+                }
+            },
+        },
+        created() {
+            this.islogin();
+        }
+    });
+</script>
+</body>
+</html>
